@@ -9,28 +9,47 @@ let currentSettings = null;
 
 logger.background('Background script initialized');
 
+if (typeof chrome !== 'undefined') {
+  logger.background('Chrome API is available');
+  if (chrome.alarms) {
+    logger.background('chrome.alarms API is available');
+  } else {
+    logger.error('Background', 'chrome.alarms API is not available');
+  }
+} else {
+  logger.error('Background', 'Chrome API is not available');
+}
+
 function startScraping(settings) {
   stopScraping();
   
   currentSettings = settings;
   logger.background('Starting scraping with settings:', settings);
 
-  // Get the current tab ID and store it
   getCurrentTab().then(tab => {
     if (tab) {
       scrapingTabId = tab.id;
       logger.background('Stored scraping tab ID:', scrapingTabId);
       
-      // Execute initial scrape
       executeScraperCycle(settings);
       
-      // Set interval based on user input
-      intervalId = setInterval(() => {
-        executeScraperCycle(settings);
-      }, settings.intervalSeconds * 1000);
-      
-      logger.background('Scraping interval set with ID:', intervalId);
+      if (chrome.alarms) {
+        chrome.alarms.create('scrapeAlarm', { periodInMinutes: settings.intervalSeconds / 60 });
+        
+        chrome.alarms.onAlarm.addListener((alarm) => {
+          if (alarm.name === 'scrapeAlarm') {
+            logger.background('Alarm triggered, executing scraper cycle');
+            executeScraperCycle(currentSettings);
+          }
+        });
+      } else {
+        logger.error('Background', 'chrome.alarms API is not available');
+      }
+    } else {
+      logger.error('Background', 'No active tab found to start scraping');
     }
+  }).catch(error => {
+    logger.error('Background', 'Error getting current tab:', error);
   });
 }
 
