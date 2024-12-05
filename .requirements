@@ -1,0 +1,66 @@
+@Codebase This is a chrome extension project. 
+1 Clicking on this extension's icon, will open a window to ask a cron expression(that runs the script automatically based on that cron expression) and a numerical field called 'Last Fetched Item ID' (that is used to compare the item ids and filters the items where item ids are greater than this value)
+2 This extension scrapes the tab user is on and searches for an h3 that has the text 'Active Deals' in it.
+3 It then finds the parent div that has 'wire:initial-data' attribute and performs some operations based on the JSON value of that attribute. I want you to modify this and remove this logic of fetching a json from attriubute. Instead look for a sibling div that has multiple cards (children divs) in it, lets call it parentDiv.
+4 Each of the child card divs will have html layout similar to the following HTML:
+
+<div>
+    <div>
+        <h3>
+            <div>
+                {{ITEM_NAME}}
+            </div>
+        </h3>
+        <div >
+            <p >
+                <span >From:</span>
+                {{ITEM_STORE_NAME}}
+            </p>
+            <p >
+                <span >Price:</span>
+                ${{ITEM_PRICE}}
+            </p>
+            <div>                                                                
+                <a target="_blank" href="{{ITEM_LINK}}">
+                    Link
+                    <svg>
+                        ...
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div >
+        <div >
+            <div >
+                <input title="amount" type="number" max="{{MAX_QTY}}" min="{{MIN_QTY}}" name="{{ITEM_ID}}_amount" id="{{ITEM_ID}}_amount" wire:model.lazy="commitments.{{ITEM_ID}}.amount" class="...">
+            </div>
+            <button wire:click="{{commit({{ITEM_ID}})}}" type="button">
+                Commit
+                <svg>
+                    ...
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+Notice the placeholder elements inside double curly brackets {{}}. Those are the values I want to fetch as those will be used later.
+
+5 Compare the ITEM_ID with the 'Last Fetched Item ID' that user entered while starting the scraping. The further actions are only performed on items where the ITEM_ID value is greater than 'Last Fetched Item ID' value. If the first 10 items are not having ITEM_ID greater than the 'Last Fetched Item ID', then stop this scraping session and wait for the next session based on cron expression. 
+6 Check if the ITEM_STORE_NAME contains 'Amazon' and doesn't contain 'Business'.
+7 Check if a button element is present under this card with attribute wire:click. 
+8 Fetch the values ITEM_NAME, ITEM_STORE_NAME, ITEM_PRICE and ITEM_ID and trigger a browser notification using the notification.mp3 file and log the details in the console as well.
+9 Wait for 10 seconds and refresh the page at the end.
+
+
+
+Additional requirements:
+10 Only run on the tab where the Start scraping button was clicked. Currently, when I change tabs focus, the script tries to scrape the active tab. I want the script to keep scraping the original tab only.
+11 Save the ITEM_ID for which the notification was sent as the new 'Last Fetched Item ID' and reflect the same in the extension window. This is so that the same notifications are not sent again.
+12 If an input element was found and ITEM_ID was successfully extracted, then: 
+    a) Fetch the input element and set the value to 1
+    b) fetch the button present as a sibling of its parent that contains the attribute 'wire:click'.
+    c) This button has a click event associated with it and the script should trigger it one by one. But, one thing that we need to take care of is that triggering a click event on this button will trigger a post request and refresh the page.
+    d) So, store a queue of all the items and click events that need to be triggered one by one after the post request and page refresh was successful. The notification should only be triggered and the 'Last Fetched Item ID' value should only be updated once this trigger was successful. 

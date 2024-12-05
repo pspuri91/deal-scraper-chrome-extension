@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Deal Scraper",
+  "version": "1.0",
+  "description": "Scrapes active deals based on configurable settings",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "notifications",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icon48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "web_accessible_resources": [{
+    "resources": ["content/scraper.js", "notification.mp3"],
+    "matches": ["<all_urls>"]
+  }],
+  "icons": {
+    "48": "icon48.png"
+  }
+}
